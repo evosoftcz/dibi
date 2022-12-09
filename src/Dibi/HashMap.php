@@ -43,6 +43,7 @@ abstract class HashMapBase
  * Lazy cached storage.
  * @internal
  */
+#[\AllowDynamicProperties]
 final class HashMap extends HashMapBase
 {
 	public function __set(string $nm, $val)
