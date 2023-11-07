@@ -117,7 +117,7 @@ class Panel implements Tracy\IBarPanel
 			$explain = null; // EXPLAIN is called here to work SELECT FOUND_ROWS()
 			if ($this->explain && $event->type === Event::SELECT) {
 				$backup = [$connection->onEvent, \dibi::$numOfQueries, \dibi::$totalTime];
-				$connection->onEvent = null;
+				$connection->onEvent = [];
 				$cmd = is_string($this->explain)
 					? $this->explain
 					: ($connection->getConfig('driver') === 'oracle' ? 'EXPLAIN PLAN FOR' : 'EXPLAIN');
