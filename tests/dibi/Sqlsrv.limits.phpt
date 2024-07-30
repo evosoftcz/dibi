@@ -83,7 +83,7 @@ $tests = function ($conn) {
 		);
 
 		Assert::exception(
-			$conn->translate('SELECT 1 %ofs %lmt', 10, 10),
+			fn() => $conn->translate('SELECT 1 %ofs %lmt', 10, 10),
 			Dibi\NotSupportedException::class,
 		);
 	}

@@ -15,26 +15,15 @@ namespace Dibi;
  */
 class DataSource implements IDataSource
 {
-	use Strict;
-
 	private Connection $connection;
-
 	private string $sql;
-
 	private ?Result $result = null;
-
 	private ?int $count = null;
-
 	private ?int $totalCount = null;
-
 	private array $cols = [];
-
 	private array $sorting = [];
-
 	private array $conds = [];
-
 	private ?int $offset = null;
-
 	private ?int $limit = null;
 
 
@@ -55,13 +44,14 @@ class DataSource implements IDataSource
 	 * @param  string|array  $col  column name or array of column names
 	 * @param  string  $as        column alias
 	 */
-	public function select(string|array $col, string $as = null): static
+	public function select(string|array $col, ?string $as = null): static
 	{
 		if (is_array($col)) {
 			$this->cols = $col;
 		} else {
 			$this->cols[$col] = $as;
 		}
+
 		$this->result = null;
 		return $this;
 	}
@@ -91,6 +81,7 @@ class DataSource implements IDataSource
 		} else {
 			$this->sorting[$row] = $direction;
 		}
+
 		$this->result = null;
 		return $this;
 	}
@@ -99,7 +90,7 @@ class DataSource implements IDataSource
 	/**
 	 * Limits number of rows.
 	 */
-	public function applyLimit(int $limit, int $offset = null): static
+	public function applyLimit(int $limit, ?int $offset = null): static
 	{
 		$this->limit = $limit;
 		$this->offset = $offset;
@@ -125,6 +116,7 @@ class DataSource implements IDataSource
 		if ($this->result === null) {
 			$this->result = $this->connection->nativeQuery($this->__toString());
 		}
+
 		return $this->result;
 	}
 
@@ -175,7 +167,7 @@ class DataSource implements IDataSource
 	/**
 	 * Fetches all records from table like $key => $value pairs.
 	 */
-	public function fetchPairs(string $key = null, string $value = null): array
+	public function fetchPairs(?string $key = null, ?string $value = null): array
 	{
 		return $this->getResult()->fetchPairs($key, $value);
 	}
@@ -247,6 +239,7 @@ class DataSource implements IDataSource
 				)->fetchSingle())
 				: $this->getTotalCount();
 		}
+
 		return $this->count;
 	}
 
@@ -261,6 +254,7 @@ class DataSource implements IDataSource
 				'SELECT COUNT(*) FROM ' . $this->sql,
 			)->fetchSingle());
 		}
+
 		return $this->totalCount;
 	}
 }

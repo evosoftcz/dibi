@@ -15,8 +15,6 @@ namespace Dibi;
  */
 class Expression
 {
-	use Strict;
-
 	private array $values;
 
 

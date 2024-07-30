@@ -17,13 +17,8 @@ use Dibi;
  */
 class OdbcResult implements Dibi\ResultDriver
 {
-	use Dibi\Strict;
-
 	/** @var resource */
 	private $resultSet;
-
-	private bool $autoFree = true;
-
 	private int $row = 0;
 
 
@@ -33,17 +28,6 @@ class OdbcResult implements Dibi\ResultDriver
 	public function __construct($resultSet)
 	{
 		$this->resultSet = $resultSet;
-	}
-
-
-	/**
-	 * Automatically frees the resources allocated for this result set.
-	 */
-	public function __destruct()
-	{
-		if ($this->autoFree && $this->getResultResource()) {
-			$this->free();
-		}
 	}
 
 
@@ -70,11 +54,13 @@ class OdbcResult implements Dibi\ResultDriver
 			if (!odbc_fetch_row($set, ++$this->row)) {
 				return null;
 			}
+
 			$count = odbc_num_fields($set);
 			$cols = [];
 			for ($i = 1; $i <= $count; $i++) {
 				$cols[] = odbc_result($set, $i);
 			}
+
 			return $cols;
 		}
 	}
@@ -114,6 +100,7 @@ class OdbcResult implements Dibi\ResultDriver
 				'nativetype' => odbc_field_type($this->resultSet, $i),
 			];
 		}
+
 		return $columns;
 	}
 
@@ -124,7 +111,6 @@ class OdbcResult implements Dibi\ResultDriver
 	 */
 	public function getResultResource(): mixed
 	{
-		$this->autoFree = false;
 		return is_resource($this->resultSet) ? $this->resultSet : null;
 	}
 

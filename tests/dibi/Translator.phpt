@@ -91,9 +91,11 @@ Assert::same(
 );
 
 // invalid input
-$e = Assert::exception(function () use ($conn) {
-	$conn->translate('SELECT %s', (object) [123], ', %m', 123);
-}, Dibi\Exception::class, 'SQL translate error: Invalid combination of type stdClass and modifier %s');
+$e = Assert::exception(
+	fn() => $conn->translate('SELECT %s', (object) [123], ', %m', 123),
+	Dibi\Exception::class,
+	'SQL translate error: Invalid combination of type stdClass and modifier %s',
+);
 Assert::same('SELECT **Invalid combination of type stdClass and modifier %s** , **Unknown or unexpected modifier %m**', $e->getSql());
 
 Assert::same(
@@ -176,9 +178,10 @@ Assert::same(
 );
 
 if ($config['system'] === 'odbc') {
-	Assert::exception(function () use ($conn) {
-		$conn->translate('SELECT * FROM [products] %lmt %ofs', 2, 1);
-	}, Dibi\Exception::class);
+	Assert::exception(
+		fn() => $conn->translate('SELECT * FROM [products] %lmt %ofs', 2, 1),
+		Dibi\Exception::class,
+	);
 } else {
 	// with limit = 2, offset = 1
 	Assert::same(
@@ -226,9 +229,11 @@ Assert::same(
 	]),
 );
 
-Assert::exception(function () use ($conn) {
-	$conn->translate('SELECT %s', new DateTime('1212-09-26'));
-}, Dibi\Exception::class, 'SQL translate error: Invalid combination of type Dibi\DateTime and modifier %s');
+Assert::exception(
+	fn() => $conn->translate('SELECT %s', new DateTime('1212-09-26')),
+	Dibi\Exception::class,
+	'SQL translate error: Invalid combination of type Dibi\DateTime and modifier %s',
+);
 
 
 
@@ -268,37 +273,44 @@ if ($config['system'] === 'postgre') {
 }
 
 
-$e = Assert::exception(function () use ($conn) {
-	$conn->translate("SELECT '");
-}, Dibi\Exception::class, 'SQL translate error: Alone quote');
+$e = Assert::exception(
+	fn() => $conn->translate("SELECT '"),
+	Dibi\Exception::class,
+	'SQL translate error: Alone quote',
+);
 Assert::same('SELECT **Alone quote**', $e->getSql());
 
 Assert::match(
-	reformat([
-		'mysql' => "SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
-CONCAT(last_name, ', ', first_name) AS full_name
-GROUP BY `user`
-HAVING MAX(salary) > %i 123
-INTO OUTFILE '/tmp/result\\'.txt'
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\\\"'
-LINES TERMINATED BY '\\\\n'
-",
-		'sqlsrv' => "SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
-CONCAT(last_name, N', ', first_name) AS full_name
-GROUP BY [user]
-HAVING MAX(salary) > %i 123
-INTO OUTFILE N'/tmp/result''.txt'
-FIELDS TERMINATED BY N',' OPTIONALLY ENCLOSED BY N'\"'
-LINES TERMINATED BY N'\\n'", "SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
-CONCAT(last_name, ', ', first_name) AS full_name
-GROUP BY [user]
-HAVING MAX(salary) > %i 123
-INTO OUTFILE '/tmp/result''.txt'
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'
-LINES TERMINATED BY '\\n'
-",
+	pattern: reformat([
+		'mysql' => <<<'XX'
+			SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
+			CONCAT(last_name, ', ', first_name) AS full_name
+			GROUP BY `user`
+			HAVING MAX(salary) > %i 123
+			INTO OUTFILE '/tmp/result\'.txt'
+			FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'
+			LINES TERMINATED BY '\\n'
+			XX,
+		'sqlsrv' => <<<'XX'
+			SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
+			CONCAT(last_name, N', ', first_name) AS full_name
+			GROUP BY [user]
+			HAVING MAX(salary) > %i 123
+			INTO OUTFILE N'/tmp/result''.txt'
+			FIELDS TERMINATED BY N',' OPTIONALLY ENCLOSED BY N'"'
+			LINES TERMINATED BY N'\n'
+			XX,
+		<<<'XX'
+			SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
+			CONCAT(last_name, ', ', first_name) AS full_name
+			GROUP BY [user]
+			HAVING MAX(salary) > %i 123
+			INTO OUTFILE '/tmp/result''.txt'
+			FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+			LINES TERMINATED BY '\n'
+			XX,
 	]),
-	$conn->translate('%sql', 'SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
+	actual: $conn->translate('%sql', 'SELECT DISTINCT HIGH_PRIORITY SQL_BUFFER_RESULT
 CONCAT(last_name, ", ", first_name) AS full_name
 GROUP BY [user]
 HAVING MAX(salary) > %i', 123, "
@@ -330,114 +342,124 @@ $array5 = ['RAND()', '[col1] > [col2]'];
 
 
 Assert::match(
-	reformat([
-		'mysql' => "SELECT *
-FROM `db`.`table`
-WHERE (`test`.`a` LIKE '1995-03-01'
-	OR `b1` IN ( 1, 2, 3 )
-	OR `b2` IN ('1', '2', '3' )
-	OR `b3` IN ( )
-	OR `b4` IN ( 'one', 'two', 'three' )
-	OR `b5` IN (`col1` AS `one`, `col2` AS `two`, `col3` AS `thr.ee` )
-	OR `b6` IN ('one', 'two', 'thr.ee')
-	OR `b7` IN (NULL)
-	OR `b8` IN (RAND() `col1` > `col2` )
-	OR `b9` IN (RAND(), [col1] > [col2] )
-	OR `b10` IN (  )
-	AND `c` = 'embedded \\' string'
-	OR `d`=10
-	OR `e`=NULL
-	OR `true`= 1
-	OR `false`= 0
-	OR `str_null`=NULL
-	OR `str_not_null`='hello'
-LIMIT 10",
-		'sqlsrv' => "SELECT *
-FROM [db].[table]
-WHERE ([test].[a] LIKE '1995-03-01'
-	OR [b1] IN ( 1, 2, 3 )
-	OR [b2] IN (N'1', N'2', N'3' )
-	OR [b3] IN ( )
-	OR [b4] IN ( N'one', N'two', N'three' )
-	OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
-	OR [b6] IN (N'one', N'two', N'thr.ee')
-	OR [b7] IN (NULL)
-	OR [b8] IN (RAND() [col1] > [col2] )
-	OR [b9] IN (RAND(), [col1] > [col2] )
-	OR [b10] IN (  )
-	AND [c] = N'embedded '' string'
-	OR [d]=10
-	OR [e]=NULL
-	OR [true]= 1
-	OR [false]= 0
-	OR [str_null]=NULL
-	OR [str_not_null]=N'hello'
-LIMIT 10",
-		'postgre' => 'SELECT *
-FROM "db"."table"
-WHERE ("test"."a" LIKE \'1995-03-01\'
-	OR "b1" IN ( 1, 2, 3 )
-	OR "b2" IN (\'1\', \'2\', \'3\' )
-	OR "b3" IN ( )
-	OR "b4" IN ( \'one\', \'two\', \'three\' )
-	OR "b5" IN ("col1" AS "one", "col2" AS "two", "col3" AS "thr.ee" )
-	OR "b6" IN (\'one\', \'two\', \'thr.ee\')
-	OR "b7" IN (NULL)
-	OR "b8" IN (RAND() "col1" > "col2" )
-	OR "b9" IN (RAND(), [col1] > [col2] )
-	OR "b10" IN (  )
-	AND "c" = \'embedded \'\' string\'
-	OR "d"=10
-	OR "e"=NULL
-	OR "true"= TRUE
-	OR "false"= FALSE
-	OR "str_null"=NULL
-	OR "str_not_null"=\'hello\'
-LIMIT 10',
-		'odbc' => "SELECT *
-FROM [db].[table]
-WHERE ([test].[a] LIKE #03/01/1995#
-	OR [b1] IN ( 1, 2, 3 )
-	OR [b2] IN ('1', '2', '3' )
-	OR [b3] IN ( )
-	OR [b4] IN ( 'one', 'two', 'three' )
-	OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
-	OR [b6] IN ('one', 'two', 'thr.ee')
-	OR [b7] IN (NULL)
-	OR [b8] IN (RAND() [col1] > [col2] )
-	OR [b9] IN (RAND(), [col1] > [col2] )
-	OR [b10] IN (  )
-	AND [c] = 'embedded '' string'
-	OR [d]=10
-	OR [e]=NULL
-	OR [true]= 1
-	OR [false]= 0
-	OR [str_null]=NULL
-	OR [str_not_null]='hello'
-LIMIT 10",
-		"SELECT *
-FROM [db].[table]
-WHERE ([test].[a] LIKE '1995-03-01'
-	OR [b1] IN ( 1, 2, 3 )
-	OR [b2] IN ('1', '2', '3' )
-	OR [b3] IN ( )
-	OR [b4] IN ( 'one', 'two', 'three' )
-	OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
-	OR [b6] IN ('one', 'two', 'thr.ee')
-	OR [b7] IN (NULL)
-	OR [b8] IN (RAND() [col1] > [col2] )
-	OR [b9] IN (RAND(), [col1] > [col2] )
-	OR [b10] IN (  )
-	AND [c] = 'embedded '' string'
-	OR [d]=10
-	OR [e]=NULL
-	OR [true]= 1
-	OR [false]= 0
-	OR [str_null]=NULL
-	OR [str_not_null]='hello'
-LIMIT 10",
+	pattern: reformat([
+		'mysql' => <<<'XX'
+			SELECT *
+			FROM `db`.`table`
+			WHERE (`test`.`a` LIKE '1995-03-01'
+				OR `b1` IN ( 1, 2, 3 )
+				OR `b2` IN ('1', '2', '3' )
+				OR `b3` IN ( )
+				OR `b4` IN ( 'one', 'two', 'three' )
+				OR `b5` IN (`col1` AS `one`, `col2` AS `two`, `col3` AS `thr.ee` )
+				OR `b6` IN ('one', 'two', 'thr.ee')
+				OR `b7` IN (NULL)
+				OR `b8` IN (RAND() `col1` > `col2` )
+				OR `b9` IN (RAND(), [col1] > [col2] )
+				OR `b10` IN (  )
+				AND `c` = 'embedded \' string'
+				OR `d`=10
+				OR `e`=NULL
+				OR `true`= 1
+				OR `false`= 0
+				OR `str_null`=NULL
+				OR `str_not_null`='hello'
+			LIMIT 10
+			XX,
+		'sqlsrv' => <<<'XX'
+			SELECT *
+			FROM [db].[table]
+			WHERE ([test].[a] LIKE '1995-03-01'
+				OR [b1] IN ( 1, 2, 3 )
+				OR [b2] IN (N'1', N'2', N'3' )
+				OR [b3] IN ( )
+				OR [b4] IN ( N'one', N'two', N'three' )
+				OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
+				OR [b6] IN (N'one', N'two', N'thr.ee')
+				OR [b7] IN (NULL)
+				OR [b8] IN (RAND() [col1] > [col2] )
+				OR [b9] IN (RAND(), [col1] > [col2] )
+				OR [b10] IN (  )
+				AND [c] = N'embedded '' string'
+				OR [d]=10
+				OR [e]=NULL
+				OR [true]= 1
+				OR [false]= 0
+				OR [str_null]=NULL
+				OR [str_not_null]=N'hello'
+			LIMIT 10
+			XX,
+		'postgre' => <<<'XX'
+			SELECT *
+			FROM "db"."table"
+			WHERE ("test"."a" LIKE '1995-03-01'
+				OR "b1" IN ( 1, 2, 3 )
+				OR "b2" IN ('1', '2', '3' )
+				OR "b3" IN ( )
+				OR "b4" IN ( 'one', 'two', 'three' )
+				OR "b5" IN ("col1" AS "one", "col2" AS "two", "col3" AS "thr.ee" )
+				OR "b6" IN ('one', 'two', 'thr.ee')
+				OR "b7" IN (NULL)
+				OR "b8" IN (RAND() "col1" > "col2" )
+				OR "b9" IN (RAND(), [col1] > [col2] )
+				OR "b10" IN (  )
+				AND "c" = 'embedded '' string'
+				OR "d"=10
+				OR "e"=NULL
+				OR "true"= TRUE
+				OR "false"= FALSE
+				OR "str_null"=NULL
+				OR "str_not_null"='hello'
+			LIMIT 10
+			XX,
+		'odbc' => <<<'XX'
+			SELECT *
+			FROM [db].[table]
+			WHERE ([test].[a] LIKE #03/01/1995#
+				OR [b1] IN ( 1, 2, 3 )
+				OR [b2] IN ('1', '2', '3' )
+				OR [b3] IN ( )
+				OR [b4] IN ( 'one', 'two', 'three' )
+				OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
+				OR [b6] IN ('one', 'two', 'thr.ee')
+				OR [b7] IN (NULL)
+				OR [b8] IN (RAND() [col1] > [col2] )
+				OR [b9] IN (RAND(), [col1] > [col2] )
+				OR [b10] IN (  )
+				AND [c] = 'embedded '' string'
+				OR [d]=10
+				OR [e]=NULL
+				OR [true]= 1
+				OR [false]= 0
+				OR [str_null]=NULL
+				OR [str_not_null]='hello'
+			LIMIT 10
+			XX,
+		<<<'XX'
+			SELECT *
+			FROM [db].[table]
+			WHERE ([test].[a] LIKE '1995-03-01'
+				OR [b1] IN ( 1, 2, 3 )
+				OR [b2] IN ('1', '2', '3' )
+				OR [b3] IN ( )
+				OR [b4] IN ( 'one', 'two', 'three' )
+				OR [b5] IN ([col1] AS [one], [col2] AS [two], [col3] AS [thr.ee] )
+				OR [b6] IN ('one', 'two', 'thr.ee')
+				OR [b7] IN (NULL)
+				OR [b8] IN (RAND() [col1] > [col2] )
+				OR [b9] IN (RAND(), [col1] > [col2] )
+				OR [b10] IN (  )
+				AND [c] = 'embedded '' string'
+				OR [d]=10
+				OR [e]=NULL
+				OR [true]= 1
+				OR [false]= 0
+				OR [str_null]=NULL
+				OR [str_not_null]='hello'
+			LIMIT 10
+			XX,
 	]),
-	$conn->translate('SELECT *
+	actual: $conn->translate('SELECT *
 FROM [db.table]
 WHERE ([test.a] LIKE %d', '1995-03-01', '
 	OR [b1] IN (', $array1, ')
@@ -632,13 +654,17 @@ Assert::same(
 	$conn->translate('INSERT INTO [test.*]'),
 );
 
-Assert::exception(function () use ($conn) {
-	$conn->translate('INSERT INTO %i', 'ahoj');
-}, Dibi\Exception::class, "Expected number, 'ahoj' given.");
+Assert::exception(
+	fn() => $conn->translate('INSERT INTO %i', 'ahoj'),
+	Dibi\Exception::class,
+	"Expected number, 'ahoj' given.",
+);
 
-Assert::exception(function () use ($conn) {
-	$conn->translate('INSERT INTO %f', 'ahoj');
-}, Dibi\Exception::class, "Expected number, 'ahoj' given.");
+Assert::exception(
+	fn() => $conn->translate('INSERT INTO %f', 'ahoj'),
+	Dibi\Exception::class,
+	"Expected number, 'ahoj' given.",
+);
 
 
 Assert::same(

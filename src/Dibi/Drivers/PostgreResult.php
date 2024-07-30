@@ -19,12 +19,8 @@ use PgSql;
  */
 class PostgreResult implements Dibi\ResultDriver
 {
-	use Dibi\Strict;
-
 	/** @var resource|PgSql\Result */
 	private $resultSet;
-
-	private bool $autoFree = true;
 
 
 	/**
@@ -33,17 +29,6 @@ class PostgreResult implements Dibi\ResultDriver
 	public function __construct($resultSet)
 	{
 		$this->resultSet = $resultSet;
-	}
-
-
-	/**
-	 * Automatically frees the resources allocated for this result set.
-	 */
-	public function __destruct()
-	{
-		if ($this->autoFree && $this->getResultResource()) {
-			$this->free();
-		}
 	}
 
 
@@ -102,6 +87,7 @@ class PostgreResult implements Dibi\ResultDriver
 				: $row['name'];
 			$columns[] = $row;
 		}
+
 		return $columns;
 	}
 
@@ -112,7 +98,6 @@ class PostgreResult implements Dibi\ResultDriver
 	 */
 	public function getResultResource(): mixed
 	{
-		$this->autoFree = false;
 		return is_resource($this->resultSet) || $this->resultSet instanceof PgSql\Result
 			? $this->resultSet
 			: null;

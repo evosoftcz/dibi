@@ -17,12 +17,8 @@ use Dibi;
  */
 class OracleResult implements Dibi\ResultDriver
 {
-	use Dibi\Strict;
-
 	/** @var resource */
 	private $resultSet;
-
-	private bool $autoFree = true;
 
 
 	/**
@@ -31,17 +27,6 @@ class OracleResult implements Dibi\ResultDriver
 	public function __construct($resultSet)
 	{
 		$this->resultSet = $resultSet;
-	}
-
-
-	/**
-	 * Automatically frees the resources allocated for this result set.
-	 */
-	public function __destruct()
-	{
-		if ($this->autoFree && $this->getResultResource()) {
-			$this->free();
-		}
 	}
 
 
@@ -97,10 +82,11 @@ class OracleResult implements Dibi\ResultDriver
 				'name' => mb_strtolower(oci_field_name($this->resultSet, $i)),
 				'table' => null,
                 'fullname' => mb_strtolower(oci_field_name($this->resultSet, $i)),
-				'type' => $type === 'LONG' ? Dibi\Type::TEXT : null,
+				'type' => $type === 'LONG' ? Dibi\Type::Text : null,
 				'nativetype' => $type === 'NUMBER' && oci_field_scale($this->resultSet, $i) === 0 ? 'INTEGER' : $type,
 			];
 		}
+
 		return $columns;
 	}
 
@@ -111,7 +97,6 @@ class OracleResult implements Dibi\ResultDriver
 	 */
 	public function getResultResource(): mixed
 	{
-		$this->autoFree = false;
 		return is_resource($this->resultSet) ? $this->resultSet : null;
 	}
 

@@ -33,23 +33,26 @@ class Row implements \ArrayAccess, \IteratorAggregate, \Countable
 	/**
 	 * Converts value to DateTime object.
 	 */
-	public function asDateTime(string $key, string $format = null): DateTime|string|null
+	public function asDateTime(string $key, ?string $format = null): DateTime|string|null
 	{
 		$time = $this[$key];
 		if (!$time instanceof DateTime) {
 			if (!$time || str_starts_with((string) $time, '0000-00')) { // '', null, false, '0000-00-00', ...
 				return null;
 			}
+
 			$time = new DateTime($time);
 		}
+
 		return $format === null ? $time : $time->format($format);
 	}
 
 
-	public function __get(string $key)
+	public function __get(string $key): mixed
 	{
 		$hint = Helpers::getSuggestion(array_keys((array) $this), $key);
 		trigger_error("Attempt to read missing column '$key'" . ($hint ? ", did you mean '$hint'?" : '.'), E_USER_NOTICE);
+		return null;
 	}
 
 

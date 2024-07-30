@@ -37,15 +37,16 @@ declare(strict_types=1);
  */
 class dibi
 {
-	use Dibi\Strict;
+	public const Version = '5.0.1';
 
-	public const
-		AFFECTED_ROWS = 'a',
-		IDENTIFIER = 'n';
+	/** @deprecated use dibi::Version */
+	public const VERSION = self::Version;
 
-	/** version */
-	public const
-		VERSION = '5.0-dev';
+	/** @deprecated use Dibi\Fluent::AffectedRows */
+	public const AFFECTED_ROWS = Dibi\Fluent::AffectedRows;
+
+	/** @deprecated use Dibi\Fluent::Identifier */
+	public const IDENTIFIER = Dibi\Fluent::Identifier;
 
 	/** sorting order */
 	public const
@@ -107,7 +108,7 @@ class dibi
 	 * Retrieve active connection.
 	 * @throws Dibi\Exception
 	 */
-	public static function getConnection(string $name = null): Dibi\Connection
+	public static function getConnection(?string $name = null): Dibi\Connection
 	{
 		if ($name === null) {
 			if (self::$connection === null) {
@@ -153,7 +154,7 @@ class dibi
 	 * Prints out a syntax highlighted version of the SQL command or Result.
 	 * @param  bool  $return  return output instead of printing it?
 	 */
-	public static function dump(string|Dibi\Result $sql = null, bool $return = false): ?string
+	public static function dump(string|Dibi\Result|null $sql = null, bool $return = false): ?string
 	{
 		return Dibi\Helpers::dump($sql, $return);
 	}
@@ -162,9 +163,9 @@ class dibi
 	/**
 	 * Strips microseconds part.
 	 */
-	public static function stripMicroseconds(\DateTimeInterface $dt): \DateTimeInterface
+	public static function stripMicroseconds(DateTimeInterface $dt): DateTimeInterface
 	{
-		$class = get_class($dt);
+		$class = $dt::class;
 		return new $class($dt->format('Y-m-d H:i:s'), $dt->getTimezone());
 	}
 }
