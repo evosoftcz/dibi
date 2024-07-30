@@ -17,12 +17,8 @@ use Dibi;
  */
 class SqlsrvResult implements Dibi\ResultDriver
 {
-	use Dibi\Strict;
-
 	/** @var resource */
 	private $resultSet;
-
-	private bool $autoFree = true;
 
 
 	/**
@@ -31,17 +27,6 @@ class SqlsrvResult implements Dibi\ResultDriver
 	public function __construct($resultSet)
 	{
 		$this->resultSet = $resultSet;
-	}
-
-
-	/**
-	 * Automatically frees the resources allocated for this result set.
-	 */
-	public function __destruct()
-	{
-		if ($this->autoFree && $this->getResultResource()) {
-			$this->free();
-		}
 	}
 
 
@@ -97,6 +82,7 @@ class SqlsrvResult implements Dibi\ResultDriver
 				'nativetype' => $fieldMetadata['Type'],
 			];
 		}
+
 		return $columns;
 	}
 
@@ -107,7 +93,6 @@ class SqlsrvResult implements Dibi\ResultDriver
 	 */
 	public function getResultResource(): mixed
 	{
-		$this->autoFree = false;
 		return is_resource($this->resultSet) ? $this->resultSet : null;
 	}
 

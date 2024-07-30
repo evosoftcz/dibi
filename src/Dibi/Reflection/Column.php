@@ -27,8 +27,6 @@ use Dibi;
  */
 class Column
 {
-	use Dibi\Strict;
-
 	/** when created by Result */
 	private ?Dibi\Reflector $reflector;
 
@@ -36,7 +34,7 @@ class Column
 	private array $info;
 
 
-	public function __construct(Dibi\Reflector $reflector = null, array $info)
+	public function __construct(?Dibi\Reflector $reflector, array $info)
 	{
 		$this->reflector = $reflector;
 		$this->info = $info;
@@ -66,6 +64,7 @@ class Column
 		if (empty($this->info['table']) || !$this->reflector) {
 			throw new Dibi\Exception('Table is unknown or not available.');
 		}
+
 		return new Table($this->reflector, ['name' => $this->info['table']]);
 	}
 

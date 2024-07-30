@@ -17,8 +17,6 @@ use Dibi;
  */
 class SqlsrvReflector implements Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	private Dibi\Driver $driver;
 
 
@@ -41,6 +39,7 @@ class SqlsrvReflector implements Dibi\Reflector
 				'view' => isset($row[1]) && $row[1] === 'VIEW',
 			];
 		}
+
 		return $tables;
 	}
 
@@ -90,6 +89,7 @@ class SqlsrvReflector implements Dibi\Reflector
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 
@@ -113,6 +113,7 @@ class SqlsrvReflector implements Dibi\Reflector
 			$indexes[$row['name']]['primary'] = $row['is_primary_key'] === 1;
 			$indexes[$row['name']]['columns'] = $keyUsages[$row['name']] ?? [];
 		}
+
 		return array_values($indexes);
 	}
 

@@ -20,8 +20,6 @@ use Dibi;
  */
 class Result
 {
-	use Dibi\Strict;
-
 	private Dibi\ResultDriver $driver;
 
 	/** @var Column[]|null */
@@ -53,6 +51,7 @@ class Result
 		foreach ($this->columns as $column) {
 			$res[] = $fullNames ? $column->getFullName() : $column->getName();
 		}
+
 		return $res;
 	}
 

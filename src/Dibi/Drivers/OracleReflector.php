@@ -17,8 +17,6 @@ use Dibi;
  */
 class OracleReflector implements Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	private Dibi\Driver $driver;
 
 
@@ -43,6 +41,7 @@ class OracleReflector implements Dibi\Reflector
 				];
 			}
 		}
+
 		return $tables;
 	}
 
@@ -65,6 +64,7 @@ class OracleReflector implements Dibi\Reflector
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 

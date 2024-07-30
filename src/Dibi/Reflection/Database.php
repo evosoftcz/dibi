@@ -21,17 +21,14 @@ use Dibi;
  */
 class Database
 {
-	use Dibi\Strict;
-
 	private Dibi\Reflector $reflector;
-
 	private ?string $name;
 
 	/** @var Table[] */
 	private array $tables;
 
 
-	public function __construct(Dibi\Reflector $reflector, string $name = null)
+	public function __construct(Dibi\Reflector $reflector, ?string $name = null)
 	{
 		$this->reflector = $reflector;
 		$this->name = $name;
@@ -60,6 +57,7 @@ class Database
 		foreach ($this->tables as $table) {
 			$res[] = $table->getName();
 		}
+
 		return $res;
 	}
 

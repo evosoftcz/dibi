@@ -17,13 +17,10 @@ namespace Dibi;
  */
 class Result implements IDataSource
 {
-	use Strict;
-
 	private ?ResultDriver $driver;
 
 	/** Translate table */
 	private array $types = [];
-
 	private ?Reflection\Result $meta;
 
 	/** Already fetched? Used for allowance for first seek(0) */
@@ -34,7 +31,6 @@ class Result implements IDataSource
 
 	/** @var callable|null  returned object factory */
 	private $rowFactory;
-
 	private array $formats = [];
 
 
@@ -160,12 +156,13 @@ class Result implements IDataSource
 	 * Fetches the row at current position, process optional type conversion.
 	 * and moves the internal cursor to the next position
 	 */
-	final public function fetch(): Row|array|null
+	final public function fetch(): mixed
 	{
 		$row = $this->getResultDriver()->fetch(true);
 		if ($row === null) {
 			return null;
 		}
+
 		$this->fetched = true;
 		$this->normalize($row);
 		if ($this->rowFactory) {
@@ -173,6 +170,7 @@ class Result implements IDataSource
 		} elseif ($this->rowClass) {
 			return new $this->rowClass($row);
 		}
+
 		return $row;
 	}
 
@@ -187,6 +185,7 @@ class Result implements IDataSource
 		if ($row === null) {
 			return null;
 		}
+
 		$this->fetched = true;
 		$this->normalize($row);
 		return reset($row);
@@ -197,9 +196,9 @@ class Result implements IDataSource
 	 * Fetches all records from table.
 	 * @return Row[]|array[]
 	 */
-	final public function fetchAll(int $offset = null, int $limit = null): array
+	final public function fetchAll(?int $offset = null, ?int $limit = null): array
 	{
-		$limit = $limit ?? -1;
+		$limit ??= -1;
 		$this->seek($offset ?: 0);
 		$row = $this->fetch();
 		if (!$row) {
@@ -211,6 +210,7 @@ class Result implements IDataSource
 			if ($limit === 0) {
 				break;
 			}
+
 			$limit--;
 			$data[] = $row;
 		} while ($row = $this->fetch());
@@ -283,7 +283,6 @@ class Result implements IDataSource
 					} else {
 						$x = &$x->{$assoc[$i + 1]};
 					}
-
 				} elseif ($as !== '|') { // associative-array node
 					$x = &$x[(string) $row->$as];
 				}
@@ -341,7 +340,6 @@ class Result implements IDataSource
 					} else {
 						$x = &$x[$assoc[$i + 1]];
 					}
-
 				} elseif ($as === '@') { // "object" node
 					if ($x === null) {
 						$x = clone $row;
@@ -350,7 +348,6 @@ class Result implements IDataSource
 					} else {
 						$x = &$x->{$assoc[$i + 1]};
 					}
-
 				} else { // associative-array node
 					$x = &$x[(string) $row->$as];
 				}
@@ -372,7 +369,7 @@ class Result implements IDataSource
 	 * Fetches all records from table like $key => $value pairs.
 	 * @throws \InvalidArgumentException
 	 */
-	final public function fetchPairs(string $key = null, string $value = null): array
+	final public function fetchPairs(?string $key = null, ?string $value = null): array
 	{
 		$this->seek(0);
 		$row = $this->fetch();
@@ -394,6 +391,7 @@ class Result implements IDataSource
 				do {
 					$data[] = $row[$key];
 				} while ($row = $this->fetch());
+
 				return $data;
 			}
 
@@ -408,6 +406,7 @@ class Result implements IDataSource
 				do {
 					$data[] = $row[$value];
 				} while ($row = $this->fetch());
+
 				return $data;
 			}
 
@@ -451,21 +450,22 @@ class Result implements IDataSource
 			if (!isset($row[$key])) { // null
 				continue;
 			}
+
 			$value = $row[$key];
 			$format = $this->formats[$type] ?? null;
 
 			if ($type === null || $format === 'native') {
 				$row[$key] = $value;
 
-			} elseif ($type === Type::TEXT) {
+			} elseif ($type === Type::Text) {
 				$row[$key] = (string) $value;
 
-			} elseif ($type === Type::INTEGER) {
+			} elseif ($type === Type::Integer) {
 				$row[$key] = is_float($tmp = $value * 1)
 					? (is_string($value) ? $value : (int) $value)
 					: $tmp;
 
-			} elseif ($type === Type::FLOAT) {
+			} elseif ($type === Type::Float) {
 				$value = ltrim((string) $value, '0');
 				$p = strpos($value, '.');
 				$e = strpos($value, 'e');
@@ -474,31 +474,32 @@ class Result implements IDataSource
 				} elseif ($p !== false && $e !== false) {
 					$value = rtrim($value, '.');
 				}
+
 				if ($value === '' || $value[0] === '.') {
 					$value = '0' . $value;
 				}
+
 				$row[$key] = $value === str_replace(',', '.', (string) ($float = (float) $value))
 					? $float
 					: $value;
 
-			} elseif ($type === Type::BOOL) {
+			} elseif ($type === Type::Bool) {
 				$row[$key] = ((bool) $value) && $value !== 'f' && $value !== 'F';
 
-			} elseif ($type === Type::DATETIME || $type === Type::DATE || $type === Type::TIME) {
+			} elseif ($type === Type::DateTime || $type === Type::Date || $type === Type::Time) {
 				if ($value && !str_starts_with((string) $value, '0000-00')) { // '', null, false, '0000-00-00', ...
 					$value = new DateTime($value);
 					$row[$key] = $format ? $value->format($format) : $value;
 				} else {
 					$row[$key] = null;
 				}
-
-			} elseif ($type === Type::TIME_INTERVAL) {
+			} elseif ($type === Type::TimeInterval) {
 				preg_match('#^(-?)(\d+)\D(\d+)\D(\d+)\z#', $value, $m);
 				$value = new \DateInterval("PT$m[2]H$m[3]M$m[4]S");
 				$value->invert = (int) (bool) $m[1];
 				$row[$key] = $format ? $value->format($format) : $value;
 
-			} elseif ($type === Type::BINARY) {
+			} elseif ($type === Type::Binary) {
 				$row[$key] = is_string($value)
 					? $this->getResultDriver()->unescapeBinary($value)
 					: $value;
@@ -509,7 +510,6 @@ class Result implements IDataSource
 				} else {
 					$row[$key] = json_decode($value, $format === 'array');
 				}
-
 			} else {
 				throw new \RuntimeException('Unexpected type ' . $type);
 			}
@@ -586,6 +586,7 @@ class Result implements IDataSource
 		if (!isset($this->meta)) {
 			$this->meta = new Reflection\Result($this->getResultDriver());
 		}
+
 		return $this->meta;
 	}
 

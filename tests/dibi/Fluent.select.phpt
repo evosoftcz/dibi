@@ -74,7 +74,7 @@ Assert::same(
 	(string) $fluent,
 );
 
-$fluent->orderBy(Dibi\Fluent::REMOVE);
+$fluent->orderBy(Dibi\Fluent::Remove);
 
 Assert::same(
 	reformat('SELECT * , [a] , [b] AS [bAlias] , [c], [d], [e] , [d] FROM [anotherTable] AS [anotherAlias] INNER JOIN [table3] ON table.col = table3.col WHERE col > 10 OR col < 5 AND active = 1 AND [col] IN (1, 2, 3)'),
@@ -147,9 +147,11 @@ if ($config['system'] === 'mysql') {
 		->limit(' 1; DROP TABLE users')
 		->offset(' 1; DROP TABLE users');
 
-	Assert::exception(function () use ($fluent) {
-		(string) $fluent;
-	}, Dibi\Exception::class, "Expected number, ' 1; DROP TABLE users' given.");
+	Assert::exception(
+		fn() => (string) $fluent,
+		Dibi\Exception::class,
+		"Expected number, ' 1; DROP TABLE users' given.",
+	);
 }
 
 

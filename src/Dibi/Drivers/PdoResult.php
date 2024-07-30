@@ -19,10 +19,7 @@ use PDO;
  */
 class PdoResult implements Dibi\ResultDriver
 {
-	use Dibi\Strict;
-
 	private ?\PDOStatement $resultSet;
-
 	private string $driverName;
 
 
@@ -83,6 +80,7 @@ class PdoResult implements Dibi\ResultDriver
 			if ($row === false) {
 				throw new Dibi\NotSupportedException('Driver does not support meta data.');
 			}
+
 			$row += [
 				'table' => null,
 				'native_type' => 'VAR_STRING',
@@ -92,11 +90,12 @@ class PdoResult implements Dibi\ResultDriver
 				'name' => $row['name'],
 				'table' => $row['table'],
 				'nativetype' => $row['native_type'],
-				'type' => $row['native_type'] === 'TIME' && $this->driverName === 'mysql' ? Dibi\Type::TIME_INTERVAL : null,
+				'type' => $row['native_type'] === 'TIME' && $this->driverName === 'mysql' ? Dibi\Type::TimeInterval : null,
 				'fullname' => $row['table'] ? $row['table'] . '.' . $row['name'] : $row['name'],
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 
