@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use Dibi\Type;
@@ -26,8 +27,8 @@ class MockResult extends Dibi\Result
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::TEXT);
-	$result->setFormat(Type::TEXT, 'native');
+	$result->setType('col', Type::Text);
+	$result->setFormat(Type::Text, 'native');
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
 	Assert::same(['col' => true], $result->test(['col' => true]));
@@ -37,7 +38,7 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::BOOL);
+	$result->setType('col', Type::Bool);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
 	Assert::same(['col' => true], $result->test(['col' => true]));
@@ -59,7 +60,7 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::TEXT);
+	$result->setType('col', Type::Text);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
 	Assert::same(['col' => '1'], $result->test(['col' => true]));
@@ -75,7 +76,7 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::FLOAT);
+	$result->setType('col', Type::Float);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
 	Assert::same(['col' => 1.0], $result->test(['col' => true]));
@@ -152,7 +153,7 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::INTEGER);
+	$result->setType('col', Type::Integer);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
 	Assert::same(['col' => 1], $result->test(['col' => true]));
@@ -161,9 +162,10 @@ test('', function () {
 	if (PHP_VERSION_ID < 80000) {
 		Assert::same(['col' => 0], @$result->test(['col' => ''])); // triggers warning since PHP 7.1
 	} else {
-		Assert::exception(function () use ($result) {
-			Assert::same(['col' => 0], $result->test(['col' => '']));
-		}, TypeError::class);
+		Assert::exception(
+			fn() => Assert::same(['col' => 0], $result->test(['col' => ''])),
+			TypeError::class,
+		);
 	}
 
 	Assert::same(['col' => 0], $result->test(['col' => '0']));
@@ -185,12 +187,13 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::DATETIME);
+	$result->setType('col', Type::DateTime);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
-	Assert::exception(function () use ($result) {
-		$result->test(['col' => true]);
-	}, TypeError::class);
+	Assert::exception(
+		fn() => $result->test(['col' => true]),
+		TypeError::class,
+	);
 	Assert::same(['col' => null], $result->test(['col' => false]));
 
 	Assert::same(['col' => null], $result->test(['col' => '']));
@@ -203,13 +206,14 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::DATETIME);
-	$result->setFormat(Type::DATETIME, 'Y-m-d H:i:s');
+	$result->setType('col', Type::DateTime);
+	$result->setFormat(Type::DateTime, 'Y-m-d H:i:s');
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
-	Assert::exception(function () use ($result) {
-		$result->test(['col' => true]);
-	}, TypeError::class);
+	Assert::exception(
+		fn() => $result->test(['col' => true]),
+		TypeError::class,
+	);
 	Assert::same(['col' => null], $result->test(['col' => false]));
 
 	Assert::same(['col' => null], $result->test(['col' => '']));
@@ -222,12 +226,13 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::DATE);
+	$result->setType('col', Type::Date);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
-	Assert::exception(function () use ($result) {
-		$result->test(['col' => true]);
-	}, TypeError::class);
+	Assert::exception(
+		fn() => $result->test(['col' => true]),
+		TypeError::class,
+	);
 	Assert::same(['col' => null], $result->test(['col' => false]));
 
 	Assert::same(['col' => null], $result->test(['col' => '']));
@@ -238,12 +243,13 @@ test('', function () {
 
 test('', function () {
 	$result = new MockResult;
-	$result->setType('col', Type::TIME);
+	$result->setType('col', Type::Time);
 
 	Assert::same(['col' => null], $result->test(['col' => null]));
-	Assert::exception(function () use ($result) {
-		$result->test(['col' => true]);
-	}, TypeError::class);
+	Assert::exception(
+		fn() => $result->test(['col' => true]),
+		TypeError::class,
+	);
 	Assert::same(['col' => null], $result->test(['col' => false]));
 
 	Assert::same(['col' => null], $result->test(['col' => '']));

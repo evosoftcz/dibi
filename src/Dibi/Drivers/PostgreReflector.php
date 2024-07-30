@@ -17,10 +17,7 @@ use Dibi;
  */
 class PostgreReflector implements Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	private Dibi\Driver $driver;
-
 	private string $version;
 
 
@@ -64,6 +61,7 @@ class PostgreReflector implements Dibi\Reflector
 		while ($row = $res->fetch(true)) {
 			$tables[] = $row;
 		}
+
 		return $tables;
 	}
 
@@ -74,13 +72,6 @@ class PostgreReflector implements Dibi\Reflector
 	public function getColumns(string $table): array
 	{
 		$_table = $this->driver->escapeText($this->driver->escapeIdentifier($table));
-		$res = $this->driver->query("
-			SELECT indkey
-			FROM pg_class
-			LEFT JOIN pg_index on pg_class.oid = pg_index.indrelid AND pg_index.indisprimary
-			WHERE pg_class.oid = $_table::regclass
-		");
-		$primary = (int) $res->fetch(true)['indkey'];
 
 		$res = $this->driver->query("
 			SELECT *
@@ -100,7 +91,8 @@ class PostgreReflector implements Dibi\Reflector
 					a.atttypmod-4 AS character_maximum_length,
 					NOT a.attnotnull AS is_nullable,
 					a.attnum AS ordinal_position,
-					pg_get_expr(adef.adbin, adef.adrelid) AS column_default
+					pg_get_expr(adef.adbin, adef.adrelid) AS column_default,
+					CASE WHEN a.attidentity IN ('a', 'd') THEN 'YES' ELSE 'NO' END AS is_identity
 				FROM
 					pg_attribute a
 					JOIN pg_type ON a.atttypid = pg_type.oid
@@ -125,10 +117,11 @@ class PostgreReflector implements Dibi\Reflector
 				'size' => $size > 0 ? $size : null,
 				'nullable' => $row['is_nullable'] === 'YES' || $row['is_nullable'] === 't' || $row['is_nullable'] === true,
 				'default' => $row['column_default'],
-				'autoincrement' => (int) $row['ordinal_position'] === $primary && str_starts_with($row['column_default'] ?? '', 'nextval'),
+				'autoincrement' => $row['is_identity'] === 'YES' || str_starts_with($row['column_default'] ?? '', 'nextval('),
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 
@@ -178,6 +171,7 @@ class PostgreReflector implements Dibi\Reflector
 				}
 			}
 		}
+
 		return array_values($indexes);
 	}
 

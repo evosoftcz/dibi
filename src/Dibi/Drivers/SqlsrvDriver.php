@@ -27,13 +27,9 @@ use Dibi\Helpers;
  */
 class SqlsrvDriver implements Dibi\Driver
 {
-	use Dibi\Strict;
-
 	/** @var resource */
 	private $connection;
-
 	private ?int $affectedRows;
-
 	private string $version = '';
 
 
@@ -54,7 +50,6 @@ class SqlsrvDriver implements Dibi\Driver
 			if (!is_resource($this->connection)) {
 				throw new \InvalidArgumentException("Configuration option 'resource' is not resource.");
 			}
-
 		} else {
 			$options = $config['options'];
 
@@ -70,6 +65,7 @@ class SqlsrvDriver implements Dibi\Driver
 				$info = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 				throw new Dibi\DriverException($info[0]['message'], $info[0]['code']);
 			}
+
 			sqlsrv_configure('WarningsReturnAsErrors', 1);
 		}
 
@@ -105,6 +101,7 @@ class SqlsrvDriver implements Dibi\Driver
 				? $this->createResultDriver($res)
 				: null;
 		}
+
 		return null;
 	}
 
@@ -128,6 +125,7 @@ class SqlsrvDriver implements Dibi\Driver
 			$row = sqlsrv_fetch_array($res, SQLSRV_FETCH_NUMERIC);
 			return Dibi\Helpers::intVal($row[0]);
 		}
+
 		return null;
 	}
 
@@ -136,7 +134,7 @@ class SqlsrvDriver implements Dibi\Driver
 	 * Begins a transaction (if supported).
 	 * @throws Dibi\DriverException
 	 */
-	public function begin(string $savepoint = null): void
+	public function begin(?string $savepoint = null): void
 	{
 		sqlsrv_begin_transaction($this->connection);
 	}
@@ -146,7 +144,7 @@ class SqlsrvDriver implements Dibi\Driver
 	 * Commits statements in a transaction.
 	 * @throws Dibi\DriverException
 	 */
-	public function commit(string $savepoint = null): void
+	public function commit(?string $savepoint = null): void
 	{
 		sqlsrv_commit($this->connection);
 	}
@@ -156,7 +154,7 @@ class SqlsrvDriver implements Dibi\Driver
 	 * Rollback changes in a transaction.
 	 * @throws Dibi\DriverException
 	 */
-	public function rollback(string $savepoint = null): void
+	public function rollback(?string $savepoint = null): void
 	{
 		sqlsrv_rollback($this->connection);
 	}
@@ -265,7 +263,6 @@ class SqlsrvDriver implements Dibi\Driver
 			} elseif ($limit !== null) {
 				$sql = sprintf('SELECT TOP (%d) * FROM (%s) t', $limit, $sql);
 			}
-
 		} elseif ($limit !== null) {
 			// requires ORDER BY, see https://technet.microsoft.com/en-us/library/gg699618(v=sql.110).aspx
 			$sql = sprintf('%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY', rtrim($sql), $offset, $limit);

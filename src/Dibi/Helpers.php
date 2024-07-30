@@ -12,15 +12,13 @@ namespace Dibi;
 
 class Helpers
 {
-	use Strict;
-
 	private static HashMap $types;
 
 
 	/**
 	 * Prints out a syntax highlighted version of the SQL command or Result.
 	 */
-	public static function dump(string|Result $sql = null, bool $return = false, bool $returnStringWrapping = true): ?string
+	public static function dump(string|Result|null $sql = null, bool $return = false, bool $returnStringWrapping = true): ?string
 	{
 		ob_start();
 		if ($sql instanceof Result && PHP_SAPI === 'cli') {
@@ -39,6 +37,7 @@ class Helpers
 					$spaces = $maxLen - mb_strlen($col) + 2;
 					echo "$col" . str_repeat(' ', $spaces) . "$val\n";
 				}
+
 				echo "\n";
 			}
 
@@ -51,6 +50,7 @@ class Helpers
 					foreach ($row as $col => $foo) {
 						echo "\t\t<th>" . htmlspecialchars((string) $col) . "</th>\n";
 					}
+
 					echo "\t</tr>\n</thead>\n<tbody>\n";
 				}
 
@@ -58,6 +58,7 @@ class Helpers
 				foreach ($row as $col) {
 					echo "\t\t<td>", htmlspecialchars((string) $col), "</td>\n";
 				}
+
 				echo "\t</tr>\n";
 			}
 
@@ -70,8 +71,8 @@ class Helpers
 				$sql = \dibi::$sql;
 			}
 
-			static $keywords1 = 'SELECT|(?:ON\s+DUPLICATE\s+KEY)?UPDATE|INSERT(?:\s+INTO)?|REPLACE(?:\s+INTO)?|DELETE|CALL|UNION|FROM|WHERE|HAVING|GROUP\s+BY|ORDER\s+BY|LIMIT|OFFSET|FETCH\s+NEXT|SET|VALUES|LEFT\s+JOIN|INNER\s+JOIN|TRUNCATE|START\s+TRANSACTION|BEGIN|COMMIT|ROLLBACK(?:\s+TO\s+SAVEPOINT)?|(?:RELEASE\s+)?SAVEPOINT';
-			static $keywords2 = 'ALL|DISTINCT|DISTINCTROW|IGNORE|AS|USING|ON|AND|OR|IN|IS|NOT|NULL|LIKE|RLIKE|REGEXP|TRUE|FALSE';
+			$keywords1 = 'SELECT|(?:ON\s+DUPLICATE\s+KEY)?UPDATE|INSERT(?:\s+INTO)?|REPLACE(?:\s+INTO)?|DELETE|CALL|UNION|FROM|WHERE|HAVING|GROUP\s+BY|ORDER\s+BY|LIMIT|OFFSET|FETCH\s+NEXT|SET|VALUES|LEFT\s+JOIN|INNER\s+JOIN|TRUNCATE|START\s+TRANSACTION|BEGIN|COMMIT|ROLLBACK(?:\s+TO\s+SAVEPOINT)?|(?:RELEASE\s+)?SAVEPOINT';
+			$keywords2 = 'ALL|DISTINCT|DISTINCTROW|IGNORE|AS|USING|ON|AND|OR|IN|IS|NOT|NULL|LIKE|RLIKE|REGEXP|TRUE|FALSE';
 
 			// insert new lines
 			$sql = " $sql ";
@@ -105,6 +106,7 @@ class Helpers
 						}
 					}, $sql);
 				}
+
 				echo trim($sql) . "\n\n";
 
 			} else {
@@ -151,6 +153,7 @@ class Helpers
 				$best = $item;
 			}
 		}
+
 		return $best;
 	}
 
@@ -158,13 +161,13 @@ class Helpers
 	/** @internal */
 	public static function escape(Driver $driver, $value, string $type): string
 	{
-		static $types = [
-			Type::TEXT => 'text',
-			Type::BINARY => 'binary',
-			Type::BOOL => 'bool',
-			Type::DATE => 'date',
-			Type::DATETIME => 'datetime',
-			\dibi::IDENTIFIER => 'identifier',
+		$types = [
+			Type::Text => 'text',
+			Type::Binary => 'binary',
+			Type::Bool => 'bool',
+			Type::Date => 'date',
+			Type::DateTime => 'datetime',
+			Fluent::Identifier => 'identifier',
 		];
 		if (isset($types[$type])) {
 			return $driver->{'escape' . $types[$type]}($value);
@@ -180,17 +183,17 @@ class Helpers
 	 */
 	public static function detectType(string $type): ?string
 	{
-		static $patterns = [
-			'^_' => Type::TEXT, // PostgreSQL arrays
-			'RANGE$' => Type::TEXT, // PostgreSQL range types
-			'BYTEA|BLOB|BIN' => Type::BINARY,
-			'TEXT|CHAR|POINT|INTERVAL|STRING' => Type::TEXT,
-			'YEAR|BYTE|COUNTER|SERIAL|INT|LONG|SHORT|^TINY$' => Type::INTEGER,
-			'CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER' => Type::FLOAT,
-			'^TIME$' => Type::TIME,
-			'TIME' => Type::DATETIME, // DATETIME, TIMESTAMP
-			'DATE' => Type::DATE,
-			'BOOL' => Type::BOOL,
+		$patterns = [
+			'^_' => Type::Text, // PostgreSQL arrays
+			'RANGE$' => Type::Text, // PostgreSQL range types
+			'BYTEA|BLOB|BIN' => Type::Binary,
+			'TEXT|CHAR|POINT|INTERVAL|STRING' => Type::Text,
+			'YEAR|BYTE|COUNTER|SERIAL|INT|LONG|SHORT|^TINY$' => Type::Integer,
+			'CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER' => Type::Float,
+			'^TIME$' => Type::Time,
+			'TIME' => Type::DateTime, // DATETIME, TIMESTAMP
+			'DATE' => Type::Date,
+			'BOOL' => Type::Bool,
 			'JSON' => Type::JSON,
 		];
 
@@ -199,6 +202,7 @@ class Helpers
 				return $val;
 			}
 		}
+
 		return null;
 	}
 
@@ -209,6 +213,7 @@ class Helpers
 		if (!isset(self::$types)) {
 			self::$types = new HashMap([self::class, 'detectType']);
 		}
+
 		return self::$types;
 	}
 
@@ -234,7 +239,7 @@ class Helpers
 	 * Import SQL dump from file.
 	 * Returns count of sql commands
 	 */
-	public static function loadFromFile(Connection $connection, string $file, callable $onProgress = null): int
+	public static function loadFromFile(Connection $connection, string $file, ?callable $onProgress = null): int
 	{
 		@set_time_limit(0); // intentionally @
 
@@ -261,7 +266,6 @@ class Helpers
 				if ($onProgress) {
 					$onProgress($count, isset($stat['size']) ? $size * 100 / $stat['size'] : null);
 				}
-
 			} else {
 				$sql .= $s;
 			}
@@ -274,6 +278,7 @@ class Helpers
 				$onProgress($count, isset($stat['size']) ? 100 : null);
 			}
 		}
+
 		fclose($handle);
 		return $count;
 	}
@@ -295,6 +300,7 @@ class Helpers
 			if (is_float($value * 1)) {
 				throw new Exception("Number $value is greater than integer.");
 			}
+
 			return (int) $value;
 		} else {
 			throw new Exception("Expected number, '$value' given.");

@@ -17,8 +17,6 @@ use Dibi;
  */
 class SqliteReflector implements Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	private Dibi\Driver $driver;
 
 
@@ -43,6 +41,7 @@ class SqliteReflector implements Dibi\Reflector
 		while ($row = $res->fetch(true)) {
 			$tables[] = $row;
 		}
+
 		return $tables;
 	}
 
@@ -69,6 +68,7 @@ class SqliteReflector implements Dibi\Reflector
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 
@@ -102,8 +102,10 @@ class SqliteReflector implements Dibi\Reflector
 					break;
 				}
 			}
+
 			$indexes[$index]['primary'] = (bool) $primary;
 		}
+
 		if (!$indexes) { // @see http://www.sqlite.org/lang_createtable.html#rowid
 			foreach ($columns as $column) {
 				if ($column['vendor']['pk']) {
@@ -141,6 +143,7 @@ class SqliteReflector implements Dibi\Reflector
 				$keys[$row['id']]['foreign'] = null;
 			}
 		}
+
 		return array_values($keys);
 	}
 }

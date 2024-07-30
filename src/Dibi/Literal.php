@@ -15,8 +15,6 @@ namespace Dibi;
  */
 class Literal
 {
-	use Strict;
-
 	private string $value;
 
 

@@ -25,13 +25,9 @@ use Dibi;
  */
 class OdbcDriver implements Dibi\Driver
 {
-	use Dibi\Strict;
-
 	/** @var resource */
 	private $connection;
-
 	private ?int $affectedRows;
-
 	private bool $microseconds = true;
 
 
@@ -94,6 +90,7 @@ class OdbcDriver implements Dibi\Driver
 				? $this->createResultDriver($res)
 				: null;
 		}
+
 		return null;
 	}
 
@@ -120,9 +117,9 @@ class OdbcDriver implements Dibi\Driver
 	 * Begins a transaction (if supported).
 	 * @throws Dibi\DriverException
 	 */
-	public function begin(string $savepoint = null): void
+	public function begin(?string $savepoint = null): void
 	{
-		if (!odbc_autocommit($this->connection, false)) {
+		if (!odbc_autocommit($this->connection)) {
 			throw new Dibi\DriverException(odbc_errormsg($this->connection) . ' ' . odbc_error($this->connection));
 		}
 	}
@@ -132,11 +129,12 @@ class OdbcDriver implements Dibi\Driver
 	 * Commits statements in a transaction.
 	 * @throws Dibi\DriverException
 	 */
-	public function commit(string $savepoint = null): void
+	public function commit(?string $savepoint = null): void
 	{
 		if (!odbc_commit($this->connection)) {
 			throw new Dibi\DriverException(odbc_errormsg($this->connection) . ' ' . odbc_error($this->connection));
 		}
+
 		odbc_autocommit($this->connection, true);
 	}
 
@@ -145,11 +143,12 @@ class OdbcDriver implements Dibi\Driver
 	 * Rollback changes in a transaction.
 	 * @throws Dibi\DriverException
 	 */
-	public function rollback(string $savepoint = null): void
+	public function rollback(?string $savepoint = null): void
 	{
 		if (!odbc_rollback($this->connection)) {
 			throw new Dibi\DriverException(odbc_errormsg($this->connection) . ' ' . odbc_error($this->connection));
 		}
+
 		odbc_autocommit($this->connection, true);
 	}
 

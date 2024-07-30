@@ -17,8 +17,6 @@ use Dibi;
  */
 class DummyDriver implements Dibi\Driver, Dibi\ResultDriver, Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	public function disconnect(): void
 	{
 	}
@@ -42,17 +40,17 @@ class DummyDriver implements Dibi\Driver, Dibi\ResultDriver, Dibi\Reflector
 	}
 
 
-	public function begin(string $savepoint = null): void
+	public function begin(?string $savepoint = null): void
 	{
 	}
 
 
-	public function commit(string $savepoint = null): void
+	public function commit(?string $savepoint = null): void
 	{
 	}
 
 
-	public function rollback(string $savepoint = null): void
+	public function rollback(?string $savepoint = null): void
 	{
 	}
 

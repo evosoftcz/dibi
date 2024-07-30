@@ -18,8 +18,6 @@ use Dibi;
  */
 class MySqlReflector implements Dibi\Reflector
 {
-	use Dibi\Strict;
-
 	private Dibi\Driver $driver;
 
 
@@ -42,6 +40,7 @@ class MySqlReflector implements Dibi\Reflector
 				'view' => isset($row[1]) && $row[1] === 'VIEW',
 			];
 		}
+
 		return $tables;
 	}
 
@@ -66,6 +65,7 @@ class MySqlReflector implements Dibi\Reflector
 				'vendor' => $row,
 			];
 		}
+
 		return $columns;
 	}
 
@@ -83,6 +83,7 @@ class MySqlReflector implements Dibi\Reflector
 			$indexes[$row['Key_name']]['primary'] = $row['Key_name'] === 'PRIMARY';
 			$indexes[$row['Key_name']]['columns'][$row['Seq_in_index'] - 1] = $row['Column_name'];
 		}
+
 		return array_values($indexes);
 	}
 
@@ -122,6 +123,7 @@ class MySqlReflector implements Dibi\Reflector
 			$foreignKeys[$keyName]['onDelete'] = $row['DELETE_RULE'];
 			$foreignKeys[$keyName]['onUpdate'] = $row['UPDATE_RULE'];
 		}
+
 		return array_values($foreignKeys);
 	}
 }
